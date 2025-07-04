@@ -54,12 +54,14 @@ app.post("/send", async (req, res) => {
     );
     res.json({ message: "Notification sent!", response: response.data });
   } catch (error) {
+    console.error("FCM SEND ERROR:", error.response ? error.response.data : error.message);
     res.status(500).json({
       message: "Failed to send",
       error: error.response ? error.response.data : error.message
     });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
