@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FCM Notification Sender (Custom Payload)</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: 60px auto; }
+    label { font-weight: bold; }
+    input, textarea { width: 100%; font-size: 1em; padding: 8px; margin-top: 4px; }
+    textarea { font-family: monospace; }
+    button { margin: 20px 0 0 0; padding: 12px 30px; font-size: 1.1em; cursor: pointer; }
+    #result { margin-top: 28px; }
+  </style>
+</head>
+<body>
+  <h2>Send FCM Notification (Custom Payload)</h2>
+  <form id="notifForm" autocomplete="off">
+    <label for="token">FCM Device Token</label>
+    <input type="text" id="token" required placeholder="Paste device token here">
+
+    <label for="payload" style="margin-top:22px;">Payload (Paste your JSON payload)</label>
+    <textarea id="payload" rows="14" required>{
+  "en": {
+    "title": "Your Free Trial Is Ending Soon!",
+    "description": "We hope you’re enjoying Medimir. Your free trial will end in a few days. \n\nTo keep accessing all our CDS tools and your saved patient data, please subscribe for €10 per month. You can cancel anytime."
+  },
+  "de": {
+    "title": "Deine kostenlose Testphase endet bald!",
+    "description": "Wir hoffen, dass dir Medimir gefällt. Deine kostenlose Testphase endet in ein paar Tagen. \n\nUm weiterhin auf alle unsere CDS-Tools und deine gespeicherten Patientendaten zugreifen zu können, abonniere bitte für 10 € pro Monat. Du kannst jederzeit kündigen."
+  },
+  "notification_type": "general",
+  "notification_content": {
+    "viewId": 13,
+    "tab": "free_trial_expire",
+    "title": "free_trial_ending_title",
+    "description": "free_trial_ending_body",
+    "action": [
+      {
+        "default": false,
+        "title": "subscription_activate_button",
+        "action": {
+          "viewId": 4,
+          "function": "purchase"
+        }
+      },
+      {
+        "default": true,
+        "title": "cancel_button",
+        "action": {
+          "viewId": 0
+        }
+      }
+    ]
+  }
+}
+    </textarea>
+    <button type="submit">Send Notification</button>
+    <div id="result"></div>
+  </form>
+  <script>
+    // Change this to your backend endpoint:
+    const RENDER_BACKEND_URL = "https://fcm-render-server.onrender.com/send";
+
+    document.getElementById('notifForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const token = document.getElementById('token').value.trim();
+      const payloadText = document.getElementById('payload').value.trim();
+      const resultDiv = document.getElementById('result');
+
+      let payload;
+      try {
+        payload = JSON.parse(payloadText);
+      } catch (err) {
+        resultDiv.style.color = "red";
+        resultDiv.innerHTML = "❌ Invalid JSON payload.<br>" + err.message;
+        return;
+      }
+
+      resultDiv.style.color = "black";
+      resultDiv.innerHTML = "Sending...";
+
+      try {
+        const res = await fetch(RENDER_BACKEND_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, payload })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          resultDiv.style.color = "green";
+          resultDiv.innerHTML = "✅ Notification sent!<br>" + (data.message || "");
+        } else {
+          resultDiv.style.color = "red";
+          resultDiv.innerHTML = "❌ Error: " + (data.message || JSON.stringify(data));
+        }
+      } catch (err) {
+        resultDiv.style.color = "red";
+        resultDiv.innerHTML = "❌ Network Error: " + err.message;
+      }
+    };
+  </script>
+</body>
+</html>
